@@ -1,6 +1,14 @@
-from socket_server import SocketServer
+from socket_server_base import SocketServerBase
 
-server = SocketServer(port=12345)
-server.start()
-server.stop_flag.set()
-server.join()
+class TestServer(SocketServerBase):
+    def on_init(self):
+        pass
+
+    def on_connect(self, connection):
+        pass
+
+    def on_disconnect(self):
+        pass
+
+    def on_message(self):
+        pass
