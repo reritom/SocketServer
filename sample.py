@@ -12,3 +12,4 @@ class TestServer(SocketServerBase):
 
     def on_message(self):
         pass
+

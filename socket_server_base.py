@@ -25,21 +25,51 @@ class SocketServerBase(Thread):
         self.port = port
         self.stop_flag = Event()
         self._connections = list()
+        self.routes = list()
 
         super().__init__()
 
-        return self.on_init()
+        return self.startup()
+
+    def startup(self):
+        """
+        To be overridden using:
+
+        @server.on_startup
+        def something(self):
+            # This will be run on startup
+            pass
+
+        or
+
+        server.on_startup(lambda: print("Do something here"))
+        """
+        pass
+
+    def on_startup(self, func):
+        self.startup = func
+
+    def add_rule(self, rule, callback):
+        self.routes[rule] = callback
+
+    def route(self, rule):
+        def decorator(f):
+            self.add_url_rule(rule, callback)
+            return f
+        return decorator
+
+    def send(self, connection_id, message):
+        pass
 
     def on_init(self):
         pass
 
-    def on_connect(self, connection):
+    def on_connect(self, f):
+        def decorator(self):
+            pass
         pass
 
     def on_disconnect(self):
-        pass
-
-    def on_message(self, connection, message):
         pass
 
     def run(self):
