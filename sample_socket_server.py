@@ -15,7 +15,13 @@ def connect(self, connection_id)
 
 @server.route('GET:<resource>')
 def test_route(resource):
-    return server.reply("Getting {}".format(resource))
+    print("Executing test_route")
+    return #server.reply("Getting {}".format(resource))
+
+
+@server.route404
+def invalid_command():
+    print("Not match for request")
 
 """
 @server.route('PATCH:<resource>:<data>')
@@ -23,7 +29,7 @@ def test_patch(resource, data)
     return server.reply("Getting {}".format(resource))
 
 """
-server.add_route(pattern='DEPLOY:ALL', func=lambda: print("This callback has no parameters"))
+#server.add_route(pattern='DEPLOY:ALL', func=lambda: print("This callback has no parameters"))
 
 print("Server routes are {}".format(server.routes))
 

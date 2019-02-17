@@ -35,10 +35,7 @@ class SocketServer(Thread):
         self.incoming_request_thread = Thread(target=self.incoming_request_thread_method)
 
     def run(self):
-        """
-        Running this thread awaits incoming connections, and also spawns another thread for processing any data coming from the established connections
-        """
-        print("Serving access point")
+        print("Running Server")
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((self.host, self.port))
         s.listen()
@@ -119,6 +116,12 @@ class SocketServer(Thread):
         print("Running _on_connect")
         pass
 
+    def route404(self, func):
+        self._route404 = func
+
+    def _route404(self, connection):
+        print("Running _route404")
+
     def route(self, pattern):
         def descriptor(func):
             """
@@ -142,3 +145,6 @@ class SocketServer(Thread):
 
     def dispatch(self, connection, message):
         print("Dispatching message")
+        key = list(self.routes.keys())[0]
+        func = self.routes[key]
+        return func("Hi")
