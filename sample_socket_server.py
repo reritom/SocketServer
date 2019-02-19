@@ -3,37 +3,33 @@ import time
 
 server = SocketServer(port=61000)
 
-"""
 @server.on_startup
 def startup(self):
     pass
 
 @server.on_connect
-def connect(self, connection_id)
-    return self.reply("Hello!")
-"""
+def connect(caller):
+    print("In connect")
 
 @server.route('GET:<resource>')
-def test_route(resource):
+def test_route(caller,resource):
     print("Executing test_route")
-    return #server.reply("Getting {}".format(resource))
+    return
 
 
 @server.route404
-def invalid_command():
+def invalid_command(caller):
     print("Not match for request")
 
-"""
 @server.route('PATCH:<resource>:<data>')
-def test_patch(resource, data)
-    return server.reply("Getting {}".format(resource))
+def test_patch(caller, resource, data):
+    print("In test_patch")
 
-"""
 #server.add_route(pattern='DEPLOY:ALL', func=lambda: print("This callback has no parameters"))
 
 print("Server routes are {}".format(server.routes))
 
 server.start()
-time.sleep(10)
+time.sleep(15)
 server.stop_flag.set()
 server.join()
