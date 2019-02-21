@@ -1,6 +1,7 @@
 class Caller:
-    def __init__(self, connection):
+    def __init__(self, connection, raw):
         self._connection = connection
+        self.raw = raw
 
     def reply(self, message):
         if not isinstance(message, bytes):

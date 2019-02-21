@@ -12,6 +12,7 @@ class SocketServer(Thread):
 
         if host is None:
             host = get_ip()
+            print("Host is {}".format(host))
 
         self.port = port
         self.host = host
@@ -35,6 +36,8 @@ class SocketServer(Thread):
         while True:
             if self.stop_flag.is_set():
                 print("Main stop flag is set")
+                for connection in self._connections:
+                    connection.close()
                 break
 
             # Here we process incoming connections
@@ -72,7 +75,7 @@ class SocketServer(Thread):
                         continue
 
                     # Trigger the callback
-                    caller = Caller(connection)
+                    caller = Caller(connection, data)
                     dispatch_thread = Thread(target=self.dispatch, args=(caller, data,))
                     dispatch_thread.setDaemon(True)
                     dispatch_thread.start()
@@ -89,7 +92,7 @@ class SocketServer(Thread):
             ]
 
             for connection in closed_connection_indices:
-                caller = Caller(connection)
+                caller = Caller(connection, None)
                 self._on_disconnect(caller)
 
     def on_connect(self, func):
@@ -150,7 +153,7 @@ class SocketServer(Thread):
         self.routes.append(route)
 
     def dispatch(self, caller, message):
-        print("Dispatching message")
+        print("Dispatching message {}".format(message))
         for route in self.routes:
             match = route.match(message)
             if match:

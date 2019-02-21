@@ -19,27 +19,27 @@ class Route:
         while index < len(pattern):
             if param_open:
                 if pattern[index] == '>':
-                    print("In close in param open")
+                    #print("In close in param open")
                     re_buffer +=  re_placeholder.format(placeholder_buffer)
                     placeholder_list.append(placeholder_buffer)
-                    print("Placeholder buffer {}".format(placeholder_buffer))
+                    #print("Placeholder buffer {}".format(placeholder_buffer))
                     placeholder_buffer = ''
-                    print("Rebuffer {}".format(re_buffer))
+                    #print("Rebuffer {}".format(re_buffer))
                     param_open = False
                 else:
                     placeholder_buffer += pattern[index]
 
             elif pattern[index] == '<':
-                print("Opening param")
+                #print("Opening param")
                 param_open = True
 
             elif pattern[index] == '>':
-                print("Closing param")
+                #print("Closing param")
                 param_open = False
 
             else:
                 re_buffer += pattern[index]
-                print("Rebuffer {}".format(re_buffer))
+                #print("Rebuffer {}".format(re_buffer))
 
             index += 1
 
