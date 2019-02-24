@@ -1,7 +1,9 @@
 from server.socket_server import SocketServer
+from server.protocols.http import HTTPProtocol
+from server.protocols.basic import BasicProtocol
 import time
 
-server = SocketServer(port=61000)
+server = SocketServer(port=61000, protocol=HTTPProtocol)
 
 @server.on_startup
 def startup(self):

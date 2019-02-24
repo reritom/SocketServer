@@ -5,9 +5,10 @@ import socket, os
 from .tools import get_ip
 from .route import Route
 from .caller import Caller
+from .protocols.basic import BasicProtocol
 
 class SocketServer(Thread):
-    def __init__(self, port, host=None):
+    def __init__(self, port, host=None, protocol=BasicProtocol):
         super().__init__()
 
         if host is None:
@@ -16,6 +17,7 @@ class SocketServer(Thread):
 
         self.port = port
         self.host = host
+        self.protocol = protocol
 
         self.stop_flag = Event()
         self.routes = []
@@ -76,9 +78,16 @@ class SocketServer(Thread):
 
                     # Trigger the callback
                     caller = Caller(connection, data)
+                    try:
+                        protocol = self.protocol.from_buffer(data, connection)
+                    except Exception as e:
+                        print("Failed to build protocol {}".format(e))
                     dispatch_thread = Thread(target=self.dispatch, args=(caller, data,))
                     dispatch_thread.setDaemon(True)
                     dispatch_thread.start()
+
+                    # Move this connection to the dispatched pool so the protocol handles subseqeunt communications
+                    # TODO
 
                 except:
                     # Nothing to read
