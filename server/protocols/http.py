@@ -5,8 +5,13 @@ class HTTPProtocol:
     HTTP_GET = "GET"
     HTTP_DELETE = "DELETE"
 
+    MAX_REPLIES = 1
+
     def __init__(self, connection):
-        self.connection = connection
+        self.__connection = connection
+        self.__replies_sent = 0
+        self.payload = None
+        self.headers = None
 
     @classmethod
     def from_buffer(cls, buffer, connection):
@@ -16,8 +21,17 @@ class HTTPProtocol:
         self.parse_buffer(buffer)
         return self
 
-    def reply(self, message):
-        pass
+    def reply(self, message, content_type='text'):
+        if self.__replies_sent == MAX_REPLIES:
+            raise Exception('Attempting to send reply number {} for a protocol which supports only {} replies'.format(self.__replies_sent, self.MAX_REPLIES))
+
+        if content_type == 'json':
+            if isinstance(message, dict):
+                message = json.dumps(message)
+
+        header = 'HTTP/1.1 200 OK\r\nCache-Control: no-cache, private\r\nContent-Length: {}\r\nDate: Mon, 24 Nov 2014 10:21:21 GMT\r\n\r\n'.format(len(bytes(message, 'utf-8')))
+        self.__connection.send(header)
+        self.__connection.send(message)
 
     def parse_buffer(self, buffer):
         lines = buffer.split('\n')
@@ -43,8 +57,12 @@ class HTTPProtocol:
                 print("Line {} of len {} cannot be split".format(line, len(line)))
                 break
 
+        self.headers = headers
+        self.method = method
+
         # If we aren't posting data, we've reached the end
         if method in [self.HTTP_POST, self.HTTP_PATCH]:
+            self.payload = {}
             pass
 
         print("Method {}, version {}".format(method, http_version))

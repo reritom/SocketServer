@@ -8,15 +8,8 @@ from .caller import Caller
 from .protocols.basic import BasicProtocol
 
 class SocketServer(Thread):
-    def __init__(self, port, host=None, protocol=BasicProtocol):
+    def __init__(self, protocol=BasicProtocol):
         super().__init__()
-
-        if host is None:
-            host = get_ip()
-            print("Host is {}".format(host))
-
-        self.port = port
-        self.host = host
         self.protocol = protocol
 
         self.stop_flag = Event()
@@ -25,8 +18,19 @@ class SocketServer(Thread):
         self._incoming_reqeust_queue = Queue()
         self.incoming_request_thread = Thread(target=self.incoming_request_thread_method)
 
+    def start(self, port, host=None):
+        if host is None:
+            host = get_ip()
+            print("Host is {}".format(host))
+
+        self.host = host
+        self.port = port
+
+        return super().start()
+
     def run(self):
         print("Running Server")
+
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((self.host, self.port))
         s.listen()
@@ -82,6 +86,7 @@ class SocketServer(Thread):
                         protocol = self.protocol.from_buffer(data, connection)
                     except Exception as e:
                         print("Failed to build protocol {}".format(e))
+
                     dispatch_thread = Thread(target=self.dispatch, args=(caller, data,))
                     dispatch_thread.setDaemon(True)
                     dispatch_thread.start()
@@ -143,7 +148,7 @@ class SocketServer(Thread):
     def _route404(self, caller):
         print("Running _route404")
 
-    def route(self, pattern):
+    def route(self, pattern, **kwargs):
         """
         Decorator for adding a route to the server
 
@@ -154,10 +159,10 @@ class SocketServer(Thread):
         """
 
         def descriptor(func):
-            self.add_route(pattern, func)
+            self.add_route(pattern, func, **kwargs)
         return descriptor
 
-    def add_route(self, pattern, func):
+    def add_route(self, pattern, func, **kwargs):
         route = Route(pattern, func)
         self.routes.append(route)
 
@@ -173,4 +178,3 @@ class SocketServer(Thread):
                     print("Failed to execute callback {}".format(e))
         else:
             return self._route404(caller)
-

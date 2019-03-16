@@ -3,7 +3,7 @@ from server.protocols.http import HTTPProtocol
 from server.protocols.basic import BasicProtocol
 import time
 
-server = SocketServer()
+server = SocketServer(protocol=HTTPProtocol)
 
 @server.on_startup
 def startup(self):
@@ -13,7 +13,7 @@ def startup(self):
 def connect(caller):
     print("In connect")
 
-@server.route('GET:<resource>')
+@server.route('/example/<resource>', methods=['GET'])
 def test_route(caller, resource):
     print("Executing test_route")
     time.sleep(5)
@@ -26,12 +26,11 @@ def invalid_command(caller):
     caller.reply('HTTP/1.1 200 OK\r\nCache-Control: no-cache, private\r\nContent-Length: {}\r\nDate: Mon, 24 Nov 2014 10:21:21 GMT\r\n\r\n'.format(len(bytes(body, 'utf-8'))))
     caller.reply(body)
 
-
-@server.route('PATCH:<resource>:<data>')
+@server.route('/example/<resource>', methods=['PUT'])
 def test_patch(caller, resource, data):
+    print(caller.payload)
     print("In test_patch")
 
-server.add_route(pattern='DEPLOY:ALL', func=lambda caller: caller.reply("Deploying all"))
 
 print("Server routes are {}".format(server.routes))
 
