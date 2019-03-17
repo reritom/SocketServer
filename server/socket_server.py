@@ -15,6 +15,7 @@ class SocketServer(Thread):
         self.stop_flag = Event()
         self.routes = []
         self._connections = []
+        self.processed_to_pending = Queue()
         self._incoming_reqeust_queue = Queue()
         self.incoming_request_thread = Thread(target=self.incoming_request_thread_method)
 
@@ -44,6 +45,7 @@ class SocketServer(Thread):
                 print("Main stop flag is set")
                 for connection in self._connections:
                     connection.close()
+                s.close()
                 break
 
             # Here we process incoming connections
@@ -51,10 +53,13 @@ class SocketServer(Thread):
                 conn, addr = s.accept()
                 conn.settimeout(0)
                 self._connections.append(conn)
-                caller = Caller(conn)
-                self._on_connect(caller)
-            except Exception as e:
-                continue
+                try:
+                    caller = Caller(conn)
+                    self._on_connect(caller)
+                except Exception as e:
+                    print("Failed to execute on_connect {}".format(e))
+            except:
+                pass
             else:
                 print("Connection established")
 
@@ -69,6 +74,7 @@ class SocketServer(Thread):
                 return
 
             closed_connection_indices = []
+            processed_connection_indices = []
 
             for index, connection in enumerate(self._connections):
                 try:
@@ -81,15 +87,16 @@ class SocketServer(Thread):
                         continue
 
                     # Trigger the callback
-                    caller = Caller(connection, data)
                     try:
                         protocol = self.protocol.from_buffer(data, connection)
                     except Exception as e:
                         print("Failed to build protocol {}".format(e))
 
-                    dispatch_thread = Thread(target=self.dispatch, args=(caller, data,))
+                    dispatch_thread = Thread(target=self.dispatch, args=(protocol, data,))
                     dispatch_thread.setDaemon(True)
                     dispatch_thread.start()
+
+                    processed_connection_indices.append(index)
 
                     # Move this connection to the dispatched pool so the protocol handles subseqeunt communications
                     # TODO
@@ -102,12 +109,16 @@ class SocketServer(Thread):
                 connection
                 for index, connection
                 in enumerate(self._connections)
-                if index not in closed_connection_indices
+                if (index not in closed_connection_indices)
+                and (index not in processed_connection_indices)
             ]
 
             for connection in closed_connection_indices:
                 caller = Caller(connection, None)
                 self._on_disconnect(caller)
+
+            while not self.processed_to_pending.empty():
+                self._connections.append(self.processed_to_pending.get())
 
     def on_connect(self, func):
         # Decorator for setting the internal func
@@ -164,17 +175,28 @@ class SocketServer(Thread):
 
     def add_route(self, pattern, func, **kwargs):
         route = Route(pattern, func)
+        route.set_kwargs(**kwargs)
         self.routes.append(route)
 
     def dispatch(self, caller, message):
-        print("Dispatching message {}".format(message))
+        #print("Dispatching message {}".format(message))
         for route in self.routes:
-            match = route.match(message)
-            if match:
+            # The protocol checks itself against the route (should really be the other way round)
+            if caller.match(route):
+                # The route parses the request pattern
+                match = route.match(caller.pattern)
                 print("Route has matched")
                 try:
-                    return route.callback(caller, **match.groupdict())
+                    route.callback(caller, **match.groupdict())
                 except Exception as e:
                     print("Failed to execute callback {}".format(e))
+                break
         else:
-            return self._route404(caller)
+            try:
+                print("No match for {}".format(caller.pattern))
+                self._route404(caller)
+            except Exception as e:
+                print("Failed to execute 404 callback {}".format(e))
+
+        if caller.keep_alive:
+            self.processed_to_pending.put(caller._connection)

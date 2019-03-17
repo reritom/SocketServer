@@ -5,7 +5,11 @@ class Route:
         self.callback = callback
         self.pattern = pattern
         self.regex = self.regex_from_pattern(pattern)
-        print("Pattern {} has regex {}".format(pattern, self.regex))
+        #print("Pattern {} has regex {}".format(pattern, self.regex))
+
+    def set_kwargs(self, **kwargs):
+        for key in kwargs.keys():
+            setattr(self, key, kwargs[key])
 
     @staticmethod
     def regex_from_pattern(pattern):
