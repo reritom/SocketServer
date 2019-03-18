@@ -1,6 +1,6 @@
 from server.socket_server import SocketServer
-from server.protocols.http import HTTPProtocol
-from server.protocols.basic import BasicProtocol
+from server.protocols.http.http_protocol import HTTPProtocol
+from server.protocols.basic.basic_protocol import BasicProtocol
 import time
 
 server = SocketServer(protocol=HTTPProtocol)
@@ -41,7 +41,7 @@ def test_patch(caller, resource, data):
 
 print("Server routes are {}".format(server.routes))
 
-server.start(port=61000)
+server.start(port=62000)
 time.sleep(20)
 server.stop_flag.set()
 server.join()

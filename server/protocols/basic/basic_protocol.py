@@ -5,10 +5,6 @@ class BasicProtocol:
         self.__connection = connection
         self.__replies_sent = 0
 
-    def match(self, route) -> bool:
-        # For a given route, determine if this request matches it
-        return route.match(self.buffer)
-
     @classmethod
     def from_buffer(cls, buffer, connection):
         self = cls(connection)

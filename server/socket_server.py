@@ -5,9 +5,12 @@ import socket, os
 from .tools import get_ip
 from .route import Route
 from .caller import Caller
-from .protocols.basic import BasicProtocol
+from .protocols.basic.basic_protocol import BasicProtocol
 
 class SocketServer(Thread):
+    protocols = []
+    matchers = {}
+
     def __init__(self, protocol=BasicProtocol):
         super().__init__()
         self.protocol = protocol
@@ -18,6 +21,11 @@ class SocketServer(Thread):
         self.processed_to_pending = Queue()
         self._incoming_reqeust_queue = Queue()
         self.incoming_request_thread = Thread(target=self.incoming_request_thread_method)
+
+    @staticmethod
+    def add_protocol(protocol_class, protocol_matcher):
+        SocketServer.protocols.append(protocol_class)
+        SocketServer.matchers[protocol_class] = protocol_matcher
 
     def start(self, port, host=None):
         if host is None:
@@ -181,8 +189,8 @@ class SocketServer(Thread):
     def dispatch(self, caller, message):
         #print("Dispatching message {}".format(message))
         for route in self.routes:
-            # The protocol checks itself against the route (should really be the other way round)
-            if caller.match(route):
+            # The protocol matcher matches the protocol instance against the route
+            if self.matchers[self.protocol].match(route, caller):
                 # The route parses the request pattern
                 match = route.match(caller.pattern)
                 print("Route has matched")
