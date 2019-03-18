@@ -100,7 +100,7 @@ class SocketServer(Thread):
                     except Exception as e:
                         print("Failed to build protocol {}".format(e))
 
-                    dispatch_thread = Thread(target=self.dispatch, args=(protocol, data,))
+                    dispatch_thread = Thread(target=self.dispatch, args=(protocol,))
                     dispatch_thread.setDaemon(True)
                     dispatch_thread.start()
 
@@ -186,18 +186,21 @@ class SocketServer(Thread):
         route.set_kwargs(**kwargs)
         self.routes.append(route)
 
-    def dispatch(self, caller, message):
-        #print("Dispatching message {}".format(message))
+    def _dispatch_internal(self, route, caller, **kwargs):
+        print("In parent dispatch internal")
+        try:
+            route.callback(caller, **kwargs)
+        except Exception as e:
+            print("Failed to execute callback {}".format(e))
+
+    def dispatch(self, caller):
         for route in self.routes:
             # The protocol matcher matches the protocol instance against the route
             if self.matchers[self.protocol].match(route, caller):
                 # The route parses the request pattern
                 match = route.match(caller.pattern)
                 print("Route has matched")
-                try:
-                    route.callback(caller, **match.groupdict())
-                except Exception as e:
-                    print("Failed to execute callback {}".format(e))
+                self._dispatch_internal(route, caller, **match.groupdict())
                 break
         else:
             try:

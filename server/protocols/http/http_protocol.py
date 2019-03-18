@@ -35,9 +35,12 @@ class HTTPProtocol:
             if isinstance(message, dict):
                 message = json.dumps(message)
 
-        header = 'HTTP/1.1 200 OK\r\nCache-Control: no-cache, private\r\nContent-Length: {}\r\nDate: Mon, 24 Nov 2014 10:21:21 GMT\r\n\r\n'.format(len(bytes(message, 'utf-8')))
+        if not isinstance(message, bytes):
+            message = bytes(message, 'utf-8')
+
+        header = 'HTTP/1.1 200 OK\r\nCache-Control: no-cache, private\r\nContent-Length: {}\r\nDate: Mon, 24 Nov 2014 10:21:21 GMT\r\n\r\n'.format(len(message))
         self._connection.send(bytes(header, 'utf-8'))
-        self._connection.send(bytes(message, 'utf-8'))
+        self._connection.sendall(message)
 
     @property
     def pattern(self):

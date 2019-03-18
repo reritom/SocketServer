@@ -1,7 +1,10 @@
-from server.http_server import HTTPServer
-import time, os
+from server.socket_server import SocketServer
+from server.config import Config
+from server.protocols.http.http_protocol import HTTPProtocol
+from server.protocols.basic.basic_protocol import BasicProtocol
+import time
 
-server = HTTPServer(static_dir=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'statics'))
+server = SocketServer(protocol=HTTPProtocol)
 
 @server.on_startup
 def startup(self):
@@ -15,6 +18,10 @@ def connect(caller):
 def test_route(caller):
     print("Executing test_route")
     caller.reply("Getting hi")
+
+@server.route('/favicon.ico', methods=['GET'])
+def test_route(caller):
+    caller.reply("No")
 
 @server.route('/example/<resource>', methods=['GET'])
 def test_route(caller, resource):
@@ -33,9 +40,9 @@ def test_patch(caller, resource):
     print("In test_patch")
 
 
-print("Server routes are {}".format([route.pattern for route in server.routes]))
+print("Server routes are {}".format(server.routes))
 
-server.start(port=60000)
+server.start(port=62000)
 time.sleep(20)
 server.stop_flag.set()
 server.join()
