@@ -24,8 +24,6 @@ class HTTPServer(SocketServer):
 
     def static_route_callback(self, route, caller, **kwargs):
         # Retrieve the route we are in the callback for
-        #this_route = reduce(lambda route: route.pattern == caller.pattern, self.routes)
-        #print("Returning {}".format(static_path))
         resource_path = route.resource_location
 
         with open(resource_path, 'rb') as f:
